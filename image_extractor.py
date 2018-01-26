@@ -16,9 +16,12 @@ parser.add_argument("input")
 parser.add_argument("output")
 args = parser.parse_args()
 
+# Loading image
+print("Loading image")
 image = io.imread(args.input)
 image = rgb2gray(image)
 
+print("Finding largest object")
 # apply threshold
 thresh = threshold_otsu(image)
 bw = closing(image < thresh, square(10))
@@ -32,6 +35,8 @@ image_label_overlay = label2rgb(label_image, image=image)
 
 sorted_regions = sorted(regionprops(label_image), key=lambda region: region.area, reverse=True)
 largest_region = sorted_regions[0]
+
+print("Cropping and saving")
 minr, minc, maxr, maxc = largest_region.bbox
 cropped = image[minr:maxr, minc:maxc]
 thresh = threshold_otsu(image)
