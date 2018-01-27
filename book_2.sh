@@ -1,1 +1,1 @@
-python3 download_images.py "https://ia801406.us.archive.org/BookReader/BookReaderImages.php?zip=/8/items/memorialeditiono02bewirich/memorialeditiono02bewirich_jp2.zip&file=memorialeditiono02bewirich_jp2/memorialeditiono02bewirich_{}.jp2&scale=1&rotate=0" "book_1" --to_page=456
+python3 download_images.py "https://ia801406.us.archive.org/BookReader/BookReaderImages.php?zip=/8/items/memorialeditiono02bewirich/memorialeditiono02bewirich_jp2.zip&file=memorialeditiono02bewirich_jp2/memorialeditiono02bewirich_{}.jp2&scale=1&rotate=0" "book_2" --to_page=456
