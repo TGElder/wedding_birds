@@ -80,8 +80,9 @@ for file in files:
     output_image[bird_fy:bird_ty, bird_fx:bird_tx] = bird
 
     # Rendering text and inserting into output image
+    name = ''.join([i for i in file_name if not i.isdigit()])
     text_desired_h = int(bird_area_h / 4)
-    text_image = text_renderer.get_text_image(file_name, text_desired_h)
+    text_image = text_renderer.get_text_image(name, text_desired_h)
     (text_h, text_w) = text_image.shape
     text_fy = (output_h - text_desired_h) / 2
     text_fx = (output_w - text_w - bird_w - margin_w) / 2
