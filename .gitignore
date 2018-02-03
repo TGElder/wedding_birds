@@ -2,3 +2,5 @@ book_1/
 book_2/
 *.png
 *.jpg
+*.swp
+*.pyc

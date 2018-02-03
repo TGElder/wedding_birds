@@ -13,7 +13,7 @@ parser.add_argument("output_directory")
 parser.add_argument("--output_ratio", type=float, default=2.8286)
 parser.add_argument("--x_margin", type=float, default=0.05)
 parser.add_argument("--y_margin", type=float, default=0.05)
-parser.add_argument("--text_area_width", type=float, default=0.5)
+parser.add_argument("--text_area_width", type=float, default=0.45)
 args = parser.parse_args()
 
 output_ratio = args.output_ratio
