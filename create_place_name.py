@@ -11,90 +11,85 @@ parser = argparse.ArgumentParser(description="Extracts pictures from scanned pag
 parser.add_argument("input")
 parser.add_argument("output_directory")
 parser.add_argument("--output_ratio", type=float, default=2.8286)
-parser.add_argument("--x_margin", type=float, default=0.05)
-parser.add_argument("--y_margin", type=float, default=0.05)
-parser.add_argument("--text_area_width", type=float, default=0.45)
+parser.add_argument("--margin_w_pc", type=float, default=0.05)
+parser.add_argument("--margin_h_pc", type=float, default=0.05)
+parser.add_argument("--text_area_w_pc", type=float, default=0.45)
 args = parser.parse_args()
 
 output_ratio = args.output_ratio
-x_margin = args.x_margin
-y_margin = args.y_margin
-text_area_width = args.text_area_width
+margin_w_pc = args.margin_w_pc
+margin_h_pc = args.margin_h_pc
+text_area_w_pc = args.text_area_w_pc
 
+# Handles single file or directory
 if os.path.isdir(args.input):
     files = sorted([os.path.join(args.input, file) for file in os.listdir(args.input)])
 else:
     files = [args.input]
     
-bird_area_width = 1 - x_margin * 2 - text_area_width
-bird_area_height = (1 - y_margin * 2) / output_ratio
-bird_area_ratio = bird_area_width / bird_area_height 
-print("bird_area_ratio={}".format(bird_area_ratio))
+bird_area_w_pc = 1 - margin_w_pc * 2 - text_area_w_pc
+bird_area_h_pcw = (1 - margin_h_pc * 2) / output_ratio
+bird_area_ratio = bird_area_w_pc / bird_area_h_pcw 
 
 for file in files:
-
     file_name, file_extension = os.path.splitext(os.path.basename(file))
+
+    print("Generating place name for {}".format(file_name))
+
+    # Should flip images with ! in name
     if "!" in file_name:
         flip = True
         file_name = file_name.replace("!", "")
     else:
         flip = False
-    print("Generating place name for {}".format(file_name))
 
-    print("Loading image from {}".format(file))
-    image = io.imread(file)
-    height, width = image.shape
+    print("  Loading image from {}".format(file))
+    bird = io.imread(file)
+    bird_h, bird_w = bird.shape
     if flip:
-        print("Flipping image")
-        image = numpy.fliplr(image)
+        print("  Flipping image")
+        bird = numpy.fliplr(bird)
 
-    print("Image dimensions = {}x{}".format(width, height))
-    ratio = (width*1.0) / (height*1.0)
-    print(ratio)
+    # Calculate actual size of elements
+    bird_ratio = (bird_w*1.0) / (bird_h*1.0)
 
-    if ratio >= bird_area_ratio:
-        bird_area_width = width
-        bird_area_height = width / bird_area_ratio
+    if bird_ratio >= bird_area_ratio:
+        bird_area_w = bird_w
+        bird_area_h = bird_w / bird_area_ratio
     else:
-        bird_area_width = height * bird_area_ratio
-        bird_area_height = height
+        bird_area_w = bird_h * bird_area_ratio
+        bird_area_h = bird_h
 
-    print("bird_area_dimensions={}x{}".format(bird_area_width, bird_area_height))
-    output_width = bird_area_width / (1 - text_area_width - x_margin * 2)
-    output_width = int(output_width)
-    output_height = output_width / output_ratio  
-    output_height = int(output_height)
-    output_text_width = output_width * text_area_width
-    output_text_width = int(output_text_width)
-    print("output_dimensions={}x{}".format(output_width, output_height))
-    margin_width = output_width * x_margin
-    margin_width = int(margin_width)
-    margin_height = output_height * y_margin
-    margin_height = int(margin_height)
+    output_w = int(bird_area_w / (1 - text_area_w_pc - margin_w_pc * 2))
+    output_h = int(output_w / output_ratio)
+    text_area_w = int(output_w * text_area_w_pc)
+    margin_w = int(output_w * margin_w_pc)
+    margin_h = (output_h * margin_h_pc)
 
-    bird_x_centering = int((output_width - output_text_width - margin_width * 2 - width) / 1)
-    bird_y_centering = int((output_height - margin_height * 2 - height) / 2)
+    bird_x_centering = int((output_w - margin_w * 2 - bird_w - text_area_w) / 1)
+    bird_y_centering = int((output_h - margin_h * 2 - bird_h) / 2)
 
-    output_image = numpy.ones(shape = (output_height, output_width))
+    output_image = numpy.ones(shape = (output_h, output_w))
     output_image = img_as_ubyte(output_image)
 
-    minr = margin_height + bird_y_centering
-    maxr = margin_height + bird_y_centering + height
-    minc = margin_width + output_text_width + bird_x_centering
-    maxc = margin_width + output_text_width + bird_x_centering + width
-    print("{}:{} {}:{}".format(minr, maxr, minc, maxc))
+    # Inserting bird image into output image
+    bird_fy = margin_h + bird_y_centering
+    bird_fx = margin_w + bird_x_centering + text_area_w 
+    bird_ty = bird_fy + bird_h
+    bird_tx = bird_fx + bird_w
+    output_image[bird_fy:bird_ty, bird_fx:bird_tx] = bird
 
-    output_image[minr:maxr, minc:maxc] = image
+    # Rendering text and inserting into output image
+    text_desired_h = int(bird_area_h / 4)
+    text_image = text_renderer.get_text_image(file_name, text_desired_h)
+    (text_h, text_w) = text_image.shape
+    text_fy = (output_h - text_desired_h) / 2
+    text_fx = (output_w - text_w - bird_w - margin_w) / 2
+    text_ty = text_fy + text_h
+    text_tx = text_fx + text_w
+    output_image[text_fy:text_ty, text_fx:text_tx] = text_image
 
-    text_desired_height = int(bird_area_height / 4)
-    print("Desired text height = {}".format(text_desired_height))
-    text_image = text_renderer.get_text_image(file_name, text_desired_height)
-    (text_height, text_width) = text_image.shape
-    text_ystart = (output_height - text_desired_height) / 2
-    text_xstart = (output_width - width - margin_width - text_width) / 2
-
-    output_image[text_ystart:text_ystart + text_height, text_xstart:text_xstart + text_width] = text_image
-
+    # Saving
     output_file = "{}.png".format(file_name)
     if not os.path.exists(args.output_directory):
         os.makedirs(args.output_directory)
