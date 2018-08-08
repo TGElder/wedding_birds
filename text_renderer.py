@@ -5,10 +5,10 @@ import sys
 import numpy as np
 
 def render_text(text, height, out_file):
-    surf = cairo.ImageSurface(cairo.FORMAT_A1, height * 8, height * 2)
+    surf = cairo.ImageSurface(cairo.FORMAT_A1, height * 16, height * 2)
     context = cairo.Context(surf)
 
-    context.rectangle(0,0,height * 8,height * 2)
+    context.rectangle(0,0,height * 16,height * 2)
 
     context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 

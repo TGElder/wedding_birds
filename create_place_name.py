@@ -7,7 +7,7 @@ from skimage import img_as_ubyte
 
 import text_renderer
 
-parser = argparse.ArgumentParser(description="Extracts pictures from scanned page")
+parser = argparse.ArgumentParser()
 parser.add_argument("input")
 parser.add_argument("output_directory")
 parser.add_argument("--output_ratio", type=float, default=2.8286)
