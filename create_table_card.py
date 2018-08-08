@@ -41,7 +41,7 @@ for file in files:
 
         print("Generating scene card for {}".format(file_name))
 
-        # Should flip images with ! in name
+        # Image on right if ! in name
         if "!" in file_name:
             flip = True
             file_name = file_name.replace("!", "")
@@ -51,9 +51,6 @@ for file in files:
         print("  Loading image from {}".format(file))
         scene = io.imread(file)
         scene_h, scene_w = scene.shape
-        if flip:
-            print("  Flipping image")
-            scene = numpy.fliplr(scene)
 
         # Calculate actual size of elements
         scene_ratio = (scene_w*1.0) / (scene_h*1.0)
@@ -75,19 +72,15 @@ for file in files:
         scene_x_centering = int((output_w - margin_w * 2 - scene_w) / 2)
         scene_y_centering = int((output_h - margin_h * 2 - scene_h - text_area_h) / 2)
 
-        if add_names:
-            output_image = numpy.ones(shape = (output_h, output_w * 2))
-        else:
-            output_image = numpy.ones(shape = (output_h, output_w))
-
-        output_image = img_as_ubyte(output_image)
+        scene_image = numpy.ones(shape = (output_h, output_w))
+        scene_image = img_as_ubyte(scene_image)
 
         # Inserting scene image into output image
         scene_fy = margin_h + scene_y_centering + text_area_h
         scene_fx = margin_w + scene_x_centering
         scene_ty = scene_fy + scene_h
         scene_tx = scene_fx + scene_w
-        output_image[scene_fy:scene_ty, scene_fx:scene_tx] = scene
+        scene_image[scene_fy:scene_ty, scene_fx:scene_tx] = scene
 
         # Rendering text and inserting into output image
         name = ''.join([i for i in file_name if not i.isdigit()])
@@ -102,16 +95,26 @@ for file in files:
         text_fx = margin_w + text_x_centering
         text_ty = text_fy + text_h
         text_tx = text_fx + text_w
-        output_image[text_fy:text_ty, text_fx:text_tx] = text_image
+        scene_image[text_fy:text_ty, text_fx:text_tx] = text_image
 
         if add_names:
             name_image = create_names_card.create_names_card(os.path.join(args.input, file_name) + ".txt", output_w, output_h)
-            name_fy = 0
-            name_ty = output_h
-            name_fx = output_w
-            name_tx = output_w * 2
 
-            output_image[name_fy:name_ty, name_fx:name_tx] = name_image
+            output_image = numpy.ones(shape = (output_h, output_w * 2))
+            output_image = img_as_ubyte(output_image)
+
+            if flip:
+                left_image = name_image
+                right_image = scene_image
+            else:
+                left_image = scene_image
+                right_image = name_image
+        
+            output_image[0 : output_h, 0 : output_w] = left_image
+            output_image[0 : output_h, output_w : output_w * 2] = right_image
+            
+        else:
+            output_image = scene_image
             
         # Saving
         output_file = "{}.png".format(file_name)
