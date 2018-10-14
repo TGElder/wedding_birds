@@ -14,6 +14,8 @@ parser.add_argument("--output_ratio", type=float, default=2.8286)
 parser.add_argument("--margin_w_pc", type=float, default=0.05)
 parser.add_argument("--margin_h_pc", type=float, default=0.05)
 parser.add_argument("--text_area_w_pc", type=float, default=0.45)
+parser.add_argument("--guide_w", type=float, default=0.01)
+parser.add_argument("--page_w_pc", type=float, default=1.414213562)
 args = parser.parse_args()
 
 output_ratio = args.output_ratio
@@ -90,8 +92,35 @@ for file in files:
     text_tx = text_fx + text_w
     output_image[text_fy:text_ty, text_fx:text_tx] = text_image
 
+    # Making foldable version
+    foldable_image = numpy.ones(shape = (output_h *2, output_w))
+    foldable_image = img_as_ubyte(foldable_image)
+    foldable_image[output_h : output_h * 2, 0 : output_w] = output_image
+
+    # Adding guides
+    guide_px = (int)(output_w * args.guide_w)
+    foldable_image[0 : guide_px, 0 : 2] = 0
+    foldable_image[0 : 2, 0 : guide_px] = 0
+    foldable_image[0 : guide_px, output_w - 2 : output_w] = 0
+    foldable_image[0 : 2, output_w - guide_px : output_w] = 0
+    foldable_image[output_h * 2 - guide_px : output_h * 2, 0 : 2] = 0
+    foldable_image[output_h * 2 - 2 : output_h * 2, 0 : guide_px] = 0
+    foldable_image[output_h * 2 - guide_px : output_h * 2, output_w - 2 : output_w] = 0
+    foldable_image[output_h * 2 - 2 : output_h * 2, output_w - guide_px : output_w] = 0
+
+    foldable_image[output_h - 2 : output_h, 0 : guide_px] = 0
+    foldable_image[output_h - 2 : output_h, output_w - guide_px : output_w] = 0
+
+    # Final image
+    final_w = output_w * args.page_w_pc
+    final_h = output_h * 4 * args.page_w_pc
+    final_image = numpy.ones(shape = (final_h, final_w))
+    final_image = img_as_ubyte(final_image)
+    final_image[0 : output_h * 2, 0 : output_w] = foldable_image
+
+
     # Saving
     output_file = "{}.png".format(file_name)
     if not os.path.exists(args.output_directory):
         os.makedirs(args.output_directory)
-    io.imsave(os.path.join(args.output_directory, output_file), output_image)
+    io.imsave(os.path.join(args.output_directory, output_file), final_image)

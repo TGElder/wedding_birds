@@ -16,6 +16,7 @@ parser.add_argument("--margin_w_pc", type=float, default=0.02)
 parser.add_argument("--margin_h_pc", type=float, default=0.02)
 parser.add_argument("--text_area_h_pc", type=float, default=0.25)
 parser.add_argument("--add_names", type=bool, default=True)
+parser.add_argument("--guide_w", type=float, default=0.01)
 args = parser.parse_args()
 
 output_ratio = args.output_ratio
@@ -115,9 +116,32 @@ for file in files:
             
         else:
             output_image = scene_image
-            
+
+        # Adding guides
+        guide_px = (int)( output_w * 2 * args.guide_w)
+        output_image[0 : guide_px, 0 : 2] = 0
+        output_image[0 : 2, 0 : guide_px] = 0
+        output_image[0 : guide_px,  output_w * 2 - 2 :  output_w * 2] = 0
+        output_image[0 : 2,  output_w * 2 - guide_px :  output_w * 2] = 0
+        output_image[output_h - guide_px : output_h, 0 : 2] = 0
+        output_image[output_h - 2 : output_h, 0 : guide_px] = 0
+        output_image[output_h - guide_px : output_h,  output_w * 2 - 2 :  output_w * 2] = 0
+        output_image[output_h - 2 : output_h,  output_w * 2 - guide_px :  output_w * 2] = 0
+
+        board_image = numpy.ones(shape = (output_h * 2, output_w * 2))
+        board_image = img_as_ubyte(board_image)
+        board_image[output_h : output_h * 2, 0 : output_w * 2] = output_image
+
         # Saving
-        output_file = "{}.png".format(file_name)
+        file_name = "{}.png".format(file_name)
+        board_directory = os.path.join(args.output_directory, "board")
+        table_directory = os.path.join(args.output_directory, "table")
         if not os.path.exists(args.output_directory):
             os.makedirs(args.output_directory)
-        io.imsave(os.path.join(args.output_directory, output_file), output_image)
+        if not os.path.exists(board_directory):
+            os.makedirs(board_directory)
+        if not os.path.exists(table_directory):
+            os.makedirs(table_directory)            
+        io.imsave(os.path.join(table_directory, file_name), output_image)
+        io.imsave(os.path.join(board_directory, file_name), board_image)
+        
